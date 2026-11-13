@@ -61,7 +61,7 @@ function cardHTML(c){
   const pcls=c.priority==="Ключевой"?"priority-key":c.priority==="Высокий"?"priority-high":"";
   const volumes=(c.volumes||[]).map(v=>`<span class="pill volume vol-${slug(v)}">${esc(v)}</span>`).join("");
   const wait=c.waitingOn?`<span class="pill wait">◷ Ожидает: ${esc(byId(c.waitingOn)?.title||"другое решение")}</span>`:"";
-  return `<article class="card-item type-edge-${slug(c.type)}">
+  return `<article class="card-item vol-edge-${slug((c.volumes||[])[0]||"none")}">
     <div class="card-top"><div><div class="card-meta"><span class="pill type type-${slug(c.type)}">${esc(typeName(c.type))}</span>${volumes}</div><h3 class="card-title">${esc(c.title)}</h3></div><button class="open-card" data-edit="${c.id}">Открыть ↗</button></div>
     ${c.body?`<div class="card-summary">${esc(c.body.slice(0,260))}${c.body.length>260?"…":""}</div>`:""}
     <div class="card-meta"><span class="pill maturity maturity-${slug(c.maturity||"Исследуется")}">${esc(c.maturity||"Исследуется")}</span><span class="pill ${pcls}">${esc(c.priority||"Обычный")}</span>${wait}</div>
@@ -150,7 +150,14 @@ $("homeLink").onclick=e=>{e.preventDefault();nav("home")};
 $("themeBtn").onclick=()=>{document.body.classList.toggle("light");localStorage.setItem("spektry-theme",document.body.classList.contains("light")?"light":"dark");$("themeBtn").textContent=document.body.classList.contains("light")?"☾":"☼"};
 $("exportBtn").onclick=()=>{
   const blob=new Blob([JSON.stringify({app:"spektry-workshop",version:1,exported:new Date().toISOString(),cards},null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`spektry-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);toast("Резервная копия подготовлена");
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=`spektry-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  // Do not revoke the object URL immediately: Android WebView may not have
+  // handed the download to the host yet. Mirrors the working tracker export.
+  toast("Команда на скачивание отправлена браузеру");
 };
 $("importInput").onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
