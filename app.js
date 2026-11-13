@@ -61,7 +61,7 @@ function cardHTML(c){
   const pcls=c.priority==="Ключевой"?"priority-key":c.priority==="Высокий"?"priority-high":"";
   const volumes=(c.volumes||[]).map(v=>`<span class="pill volume vol-${slug(v)}">${esc(v)}</span>`).join("");
   const wait=c.waitingOn?`<span class="pill wait">◷ Ожидает: ${esc(byId(c.waitingOn)?.title||"другое решение")}</span>`:"";
-  return `<article class="card-item vol-edge-${slug((c.volumes||[])[0]||"none")}">
+  return `<article class="card-item type-edge-${slug(c.type)}">
     <div class="card-top"><div><div class="card-meta"><span class="pill type type-${slug(c.type)}">${esc(typeName(c.type))}</span>${volumes}</div><h3 class="card-title">${esc(c.title)}</h3></div><button class="open-card" data-edit="${c.id}">Открыть ↗</button></div>
     ${c.body?`<div class="card-summary">${esc(c.body.slice(0,260))}${c.body.length>260?"…":""}</div>`:""}
     <div class="card-meta"><span class="pill maturity maturity-${slug(c.maturity||"Исследуется")}">${esc(c.maturity||"Исследуется")}</span><span class="pill ${pcls}">${esc(c.priority||"Обычный")}</span>${wait}</div>
