@@ -35,7 +35,9 @@ function loadAll(){
 function id(){return crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)}
 function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function typeName(v){return TYPES.find(x=>x[0]===v)?.[1]||v}
+function slug(v){return String(v||"").toLowerCase().replace(/[^a-zа-яё0-9]+/gi,"-").replace(/^-|-$/g,"")}
 function byId(v){return cards.find(c=>c.id===v)}
+function incomingFor(cardId){return cards.flatMap(source=>(source.connections||[]).filter(r=>r.target===cardId).map(r=>({source,relation:r}))) }
 function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2300)}
 function selectOptions(el,items,first){el.innerHTML=(first?`<option value="">${first}</option>`:"")+items.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("")}
 function initFormOptions(){
@@ -57,13 +59,13 @@ function nav(name){
 }
 function cardHTML(c){
   const pcls=c.priority==="Ключевой"?"priority-key":c.priority==="Высокий"?"priority-high":"";
-  const volumes=(c.volumes||[]).map(v=>`<span class="pill">${v}</span>`).join("");
+  const volumes=(c.volumes||[]).map(v=>`<span class="pill volume vol-${slug(v)}">${esc(v)}</span>`).join("");
   const wait=c.waitingOn?`<span class="pill wait">◷ Ожидает: ${esc(byId(c.waitingOn)?.title||"другое решение")}</span>`:"";
-  return `<article class="card-item">
-    <div class="card-top"><div><div class="card-meta"><span class="pill type">${esc(typeName(c.type))}</span>${volumes}</div><h3 class="card-title">${esc(c.title)}</h3></div><button class="open-card" data-edit="${c.id}">Открыть ↗</button></div>
+  return `<article class="card-item vol-edge-${slug((c.volumes||[])[0]||"none")}">
+    <div class="card-top"><div><div class="card-meta"><span class="pill type type-${slug(c.type)}">${esc(typeName(c.type))}</span>${volumes}</div><h3 class="card-title">${esc(c.title)}</h3></div><button class="open-card" data-edit="${c.id}">Открыть ↗</button></div>
     ${c.body?`<div class="card-summary">${esc(c.body.slice(0,260))}${c.body.length>260?"…":""}</div>`:""}
-    <div class="card-meta"><span class="pill">${esc(c.maturity||"Исследуется")}</span><span class="pill ${pcls}">${esc(c.priority||"Обычный")}</span>${wait}</div>
-    <div class="card-footer"><span>${esc(c.episode||"Без привязки к эпизоду")}</span><span>${(c.connections||[]).length} связей</span></div>
+    <div class="card-meta"><span class="pill maturity maturity-${slug(c.maturity||"Исследуется")}">${esc(c.maturity||"Исследуется")}</span><span class="pill ${pcls}">${esc(c.priority||"Обычный")}</span>${wait}</div>
+    <div class="card-footer"><span>${esc(c.episode||"Без привязки к эпизоду")}</span><span>${(c.connections||[]).length+incomingFor(c.id).length} связей</span></div>
   </article>`;
 }
 function renderList(target,items,empty){
@@ -75,8 +77,12 @@ function render(){
   const q=($("searchInput")?.value||"").toLowerCase(), t=$("typeFilter")?.value||"", v=$("volumeFilter")?.value||"", p=$("priorityFilter")?.value||"";
   const filtered=cards.filter(c=>(!q||[c.title,c.body,c.notes,c.episode].join(" ").toLowerCase().includes(q))&&(!t||c.type===t)&&(!v||(c.volumes||[]).includes(v))&&(!p||c.priority===p)).sort((a,b)=>(b.updated||0)-(a.updated||0));
   renderList("libraryCards",filtered,"Пока нет карточек по этим условиям. Попробуй изменить фильтры или создать новую.");
-  const connected=cards.filter(c=>(c.connections||[]).length);
-  $("connectionList").innerHTML=connected.length?connected.map(c=>`<article class="card-item"><h3 class="card-title">${esc(c.title)}</h3>${c.connections.map(r=>`<div class="connection-detail"><strong>${esc(r.kind)}</strong> → ${esc(byId(r.target)?.title||"Карточка не найдена")}<br>${esc(r.description||"Без пояснения")}</div>`).join("")}<div class="card-footer"><span>${esc(typeName(c.type))}</span><button class="open-card" data-edit="${c.id}">Открыть ↗</button></div></article>`).join(""):`<div class="empty-state">Связи появятся здесь, когда карточки начнут разговаривать друг с другом.</div>`;
+  const connected=cards.filter(c=>(c.connections||[]).length||incomingFor(c.id).length);
+  $("connectionList").innerHTML=connected.length?connected.map(c=>{
+    const outgoing=(c.connections||[]).map(r=>`<div class="connection-detail"><strong>${esc(r.kind)}</strong> → ${esc(byId(r.target)?.title||"Карточка не найдена")}<br>${esc(r.description||"Без пояснения")}</div>`).join("");
+    const incoming=incomingFor(c.id).map(x=>`<div class="connection-detail"><strong>${esc(x.relation.kind)}</strong> ← ${esc(x.source.title)}<br>${esc(x.relation.description||"Без пояснения")}</div>`).join("");
+    return `<article class="card-item"><h3 class="card-title">${esc(c.title)}</h3>${outgoing}${incoming}<div class="card-footer"><span>${esc(typeName(c.type))}</span><button class="open-card" data-edit="${c.id}">Открыть ↗</button></div></article>`;
+  }).join(""):`<div class="empty-state">Связи появятся здесь, когда карточки начнут разговаривать друг с другом.</div>`;
   const waiting=cards.filter(c=>c.waitingOn);
   renderList("waitingList",waiting,"Нет карточек, ожидающих другого решения.");
   const threads=cards.filter(c=>c.type==="thread");
@@ -91,6 +97,7 @@ function openEditor(cardId){
   $("dialogTitle").textContent=c?"Редактировать карточку":"Новая карточка";
   $("cardTitle").value=c?.title||"";$("cardType").value=c?.type||"question";$("cardBody").value=c?.body||"";
   $("cardMaturity").value=c?.maturity||"Исследуется";$("cardPriority").value=c?.priority||"Обычный";
+  tintSelect($("cardType"),"type");tintSelect($("cardMaturity"),"maturity");
   $("cardEpisode").value=c?.episode||"";$("cardNotes").value=c?.notes||"";
   document.querySelectorAll("#volumeChecks input").forEach(i=>i.checked=(c?.volumes||[]).includes(i.value));
   $("cardWaiting").checked=!!c?.waitingOn;populateWaiting(c?.id);$("waitingTarget").value=c?.waitingOn||"";
@@ -112,6 +119,9 @@ function addConnectionRow(data={}){
   row.querySelector(".remove-rel").onclick=()=>row.remove();$("connectionsEditor").append(row);
 }
 $("cardWaiting").addEventListener("change",()=>{$("waitingTargetWrap").hidden=!$("cardWaiting").checked});
+function tintSelect(el,kind){el.className=`field tone-${kind}-${slug(el.value)}`;}
+$("cardType").addEventListener("change",()=>tintSelect($("cardType"),"type"));
+$("cardMaturity").addEventListener("change",()=>tintSelect($("cardMaturity"),"maturity"));
 $("addConnection").onclick=()=>addConnectionRow();
 $("newCardHome").onclick=$("newCardNav").onclick=()=>openEditor();
 $("closeDialog").onclick=$("cancelDialog").onclick=()=>$("cardDialog").close();
@@ -123,10 +133,16 @@ $("deleteCard").onclick=async()=>{
 $("cardForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const cid=$("cardId").value, old=byId(cid);
-  const connections=[...$("connectionsEditor").querySelectorAll(".connection-row")].map(r=>({kind:r.querySelector(".rel-kind").value,target:r.querySelector(".rel-target").value,description:r.querySelector(".connection-description").value.trim()})).filter(r=>r.target);
-  const c={id:cid||id(),title:$("cardTitle").value.trim(),type:$("cardType").value,body:$("cardBody").value.trim(),maturity:$("cardMaturity").value,priority:$("cardPriority").value,volumes:[...document.querySelectorAll("#volumeChecks input:checked")].map(i=>i.value),episode:$("cardEpisode").value.trim(),waitingOn:$("cardWaiting").checked?$("waitingTarget").value:"",connections,notes:$("cardNotes").value.trim(),created:old?.created||Date.now(),updated:Date.now()};
+  const waitingOn=$("cardWaiting").checked?$("waitingTarget").value:"";
+  if($("cardWaiting").checked&&!waitingOn){toast("Выбери карточку, от которой зависит это решение");$("waitingTarget").focus();return;}
+  const rows=[...$("connectionsEditor").querySelectorAll(".connection-row")];
+  const incomplete=rows.find(r=>!r.querySelector(".rel-target").value);
+  if(incomplete){toast("Укажи карточку для каждой добавленной связи или убери пустую строку");incomplete.querySelector(".rel-target").focus();return;}
+  const connections=rows.map(r=>({kind:r.querySelector(".rel-kind").value,target:r.querySelector(".rel-target").value,description:r.querySelector(".connection-description").value.trim()}));
+  const c={id:cid||id(),title:$("cardTitle").value.trim(),type:$("cardType").value,body:$("cardBody").value.trim(),maturity:$("cardMaturity").value,priority:$("cardPriority").value,volumes:[...document.querySelectorAll("#volumeChecks input:checked")].map(i=>i.value),episode:$("cardEpisode").value.trim(),waitingOn,connections,notes:$("cardNotes").value.trim(),created:old?.created||Date.now(),updated:Date.now()};
   if(old)cards=cards.map(x=>x.id===cid?c:x);else cards.unshift(c);
-  await saveAll();$("cardDialog").close();render();toast(old?"Изменения сохранены":"Карточка создана");
+  try{await saveAll();$("cardDialog").close();render();toast(old?"Изменения сохранены":"Карточка создана");}
+  catch(err){toast("Не удалось сохранить карточку. Данные пока остались в редакторе.");console.error(err);}
 });
 ["searchInput","typeFilter","volumeFilter","priorityFilter"].forEach(id=>$ (id).addEventListener("input",render));
 document.querySelectorAll("[data-nav]").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.nav)));
