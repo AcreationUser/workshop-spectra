@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111722">
+  <meta name="description" content="Локальная авторская мастерская цикла «Спектры».">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <title>Спектры — мастерская</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" id="homeLink" aria-label="На главную">
+        <span class="brand-mark">✳</span>
+        <span><strong>Спектры</strong><small>авторская мастерская</small></span>
+      </a>
+      <div class="top-actions">
+        <button class="icon-btn" id="themeBtn" title="Сменить тему" aria-label="Сменить тему">☼</button>
+        <button class="icon-btn" id="exportBtn" title="Экспорт резервной копии" aria-label="Экспорт">⇧</button>
+        <label class="icon-btn import-btn" title="Импорт резервной копии" aria-label="Импорт">⇩<input id="importInput" type="file" accept="application/json"></label>
+      </div>
+    </header>
+
+    <main>
+      <section id="homeView" class="view active">
+        <div class="hero">
+          <p class="eyebrow">ТИХОЕ МЕСТО ДЛЯ БОЛЬШОЙ ИСТОРИИ</p>
+          <h1>Куда сегодня?</h1>
+          <p class="hero-copy">Не обязательно решать всё. Можно просто немного поковыряться.</p>
+          <div class="modes">
+            <button class="mode-card mode-explore" data-filter-type="question">
+              <span class="mode-icon">⌕</span><strong>Поковыряться</strong><small>Вопросы и противоречия</small>
+            </button>
+            <button class="mode-card mode-play" data-filter-type="concept">
+              <span class="mode-icon">✧</span><strong>Поиграть</strong><small>Идеи и устройство мира</small>
+            </button>
+            <button class="mode-card mode-write" data-filter-type="prose">
+              <span class="mode-icon">✎</span><strong>Попробовать написать</strong><small>Художественный текст</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="section-heading">
+          <div><p class="eyebrow">БИБЛИОТЕКА</p><h2>Всё, что держит «Спектры»</h2></div>
+          <button class="text-btn" id="newCardHome">＋ Новая карточка</button>
+        </div>
+        <div class="library-grid">
+          <button class="library-tile" data-nav="library"><span>▤</span><strong>Карточки</strong><small>Все материалы</small></button>
+          <button class="library-tile" data-nav="connections"><span>⌘</span><strong>Карта связей</strong><small>Между идеями и томами</small></button>
+          <button class="library-tile" data-nav="waiting"><span>◷</span><strong>Ожидают решения</strong><small>Зависимости и блокировки</small></button>
+          <button class="library-tile" data-nav="threads"><span>⌁</span><strong>Нити</strong><small>Мотивы и пересечения</small></button>
+        </div>
+
+        <div class="section-heading recent-heading">
+          <div><p class="eyebrow">РАБОЧИЙ СТОЛ</p><h2>Недавно открывали</h2></div>
+          <span class="muted" id="cardCount">0 карточек</span>
+        </div>
+        <div id="recentCards" class="card-list empty-state">Здесь появятся твои карточки. Начать можно с одной мысли — большой или совсем маленькой.</div>
+      </section>
+
+      <section id="libraryView" class="view">
+        <div class="page-heading"><p class="eyebrow">БИБЛИОТЕКА</p><h1>Карточки</h1><p class="muted">Вся рабочая память проекта — без необходимости держать её в голове.</p></div>
+        <div class="filters">
+          <input id="searchInput" class="field search" placeholder="Найти карточку…" autocomplete="off">
+          <select id="typeFilter" class="field"><option value="">Все типы</option></select>
+          <select id="volumeFilter" class="field"><option value="">Все тома</option></select>
+          <select id="priorityFilter" class="field">
+            <option value="">Любой приоритет</option><option>Ключевой</option><option>Высокий</option><option>Обычный</option><option>Низкий</option><option>Отложено</option>
+          </select>
+        </div>
+        <div id="libraryCards" class="card-list"></div>
+      </section>
+
+      <section id="connectionsView" class="view">
+        <div class="page-heading"><p class="eyebrow">АРХИТЕКТУРА</p><h1>Карта связей</h1><p class="muted">Связи — не просто ссылки. У каждой есть направление смысла и объяснение.</p></div>
+        <div id="connectionList" class="card-list"></div>
+      </section>
+
+      <section id="waitingView" class="view">
+        <div class="page-heading"><p class="eyebrow">ЗАВИСИМОСТИ</p><h1>Ожидают решения</h1><p class="muted">Карточки, которые пока не могут продвинуться без другого ответа.</p></div>
+        <div id="waitingList" class="card-list"></div>
+      </section>
+
+      <section id="threadsView" class="view">
+        <div class="page-heading"><p class="eyebrow">СКВОЗНЫЕ МОТИВЫ</p><h1>Нити</h1><p class="muted">Мотивы, повторения и смысловые переходы между томами.</p></div>
+        <div id="threadList" class="card-list"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Основная навигация">
+      <button class="nav-item active" data-nav="home"><span>⌂</span><small>Домой</small></button>
+      <button class="nav-item" data-nav="library"><span>▤</span><small>Карточки</small></button>
+      <button class="nav-add" id="newCardNav" aria-label="Создать карточку">＋</button>
+      <button class="nav-item" data-nav="connections"><span>⌘</span><small>Связи</small></button>
+      <button class="nav-item" data-nav="waiting"><span>◷</span><small>Ожидание</small></button>
+    </nav>
+  </div>
+
+  <dialog id="cardDialog" class="editor-dialog">
+    <form id="cardForm" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">МАСТЕРСКАЯ</p><h2 id="dialogTitle">Новая карточка</h2></div><button type="button" class="icon-btn" id="closeDialog">×</button></div>
+      <input type="hidden" id="cardId">
+      <label class="form-label">Название<input id="cardTitle" class="field" required maxlength="140" placeholder="О чём эта карточка?"></label>
+      <label class="form-label">Тип<select id="cardType" class="field" required></select></label>
+      <label class="form-label">Содержание<textarea id="cardBody" class="field textarea" rows="5" placeholder="Зафиксируй мысль, вопрос, наблюдение или решение…"></textarea></label>
+      <div class="two-col">
+        <label class="form-label">Зрелость<select id="cardMaturity" class="field"></select></label>
+        <label class="form-label">Приоритет<select id="cardPriority" class="field"></select></label>
+      </div>
+      <fieldset class="form-label"><legend>Тома</legend><div id="volumeChecks" class="check-grid"></div></fieldset>
+      <label class="form-label">Эпизод / место в тексте<input id="cardEpisode" class="field" placeholder="Например: Пакт II · Манифест 1"></label>
+      <label class="form-label check-line"><input type="checkbox" id="cardWaiting"> <span>Ожидает другого решения</span></label>
+      <label class="form-label" id="waitingTargetWrap" hidden>Ждёт карточку<select id="waitingTarget" class="field"><option value="">Выбрать карточку…</option></select></label>
+      <label class="form-label">Связи с другими карточками</label>
+      <div id="connectionsEditor" class="connections-editor"></div>
+      <button type="button" class="secondary-btn" id="addConnection">＋ Добавить связь</button>
+      <label class="form-label">Заметки<textarea id="cardNotes" class="field textarea" rows="3" placeholder="Варианты, сомнения, аргументы, детали…"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="danger-btn" id="deleteCard" hidden>Удалить</button><span class="spacer"></span><button type="button" class="secondary-btn" id="cancelDialog">Отмена</button><button type="submit" class="primary-btn">Сохранить</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

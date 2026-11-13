@@ -1,0 +1,19 @@
+{
+  "name": "Спектры — авторская мастерская",
+  "short_name": "Спектры",
+  "description": "Локальная мастерская для работы над циклом «Спектры».",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111722",
+  "theme_color": "#111722",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
